@@ -27,6 +27,7 @@ setup(name='django-simpledb',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'djangotoolbox>=0.9.2',
           #'Django', nonrel
       ],
       entry_points="""
