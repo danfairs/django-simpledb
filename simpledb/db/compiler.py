@@ -1,5 +1,6 @@
 import datetime
 import sys
+import uuid
 
 from django.db.models.sql.constants import LOOKUP_SEP, MULTI, SINGLE
 from django.db.models.sql.where import AND, OR
@@ -8,11 +9,17 @@ from django.utils.tree import Node
 
 from functools import wraps
 
+from boto.exception import (BotoClientError, SDBPersistenceError,
+    BotoServerError)
+from boto.sdb.domain import Domain
+
 from djangotoolbox.db.basecompiler import NonrelQuery, NonrelCompiler, \
     NonrelInsertCompiler, NonrelUpdateCompiler, NonrelDeleteCompiler
 
 from simpledb.db.query import SimpleDBQuery
 from simpledb.utils import domain_for_model
+
+
 
 # TODO: Change this to match your DB
 # Valid query types (a dictionary is used for speedy lookups).
@@ -49,12 +56,25 @@ def safe_call(func):
     def _func(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        # TODO: Replace this with your DB error class
-        except Exception, e:
-            import pdb; pdb.set_trace()
-
+        except (BotoClientError, SDBPersistenceError,
+            BotoServerError), e:
             raise DatabaseError, DatabaseError(*tuple(e)), sys.exc_info()[2]
     return _func
+
+def save_entity(connection, model, data):
+    domain_name = domain_for_model(model)
+    manager = connection.create_manager(domain_name)
+    attrs = {
+        '__type__': domain_name,
+    }
+    attrs.update(data)
+    if not attrs.has_key('_id'):
+        # New item. Generate an ID.
+        attrs['_id'] = uuid.uuid4().hex
+    domain = Domain(name=domain_name, connection=manager.sdb)
+    domain.put_attributes(attrs['_id'], attrs, replace=True)
+    return attrs['_id']
+
 
 class BackendQuery(NonrelQuery):
 
@@ -190,9 +210,7 @@ class SQLInsertCompiler(NonrelInsertCompiler, SQLCompiler):
         if pk_column in data:
             data['_id'] = data[pk_column]
             del data[pk_column]
-
-        pk = save_entity(self.connection.db_connection,
-            self.query.get_meta().db_table, data)
+        pk = save_entity(self.connection, self.query.model, data)
         return pk
 
 class SQLUpdateCompiler(NonrelUpdateCompiler, SQLCompiler):
