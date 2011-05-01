@@ -1,6 +1,8 @@
 import datetime
 import sys
 
+from simpledb.db.query import SimpleDBQuery
+
 from django.db.models.sql.constants import LOOKUP_SEP, MULTI, SINGLE
 from django.db.models.sql.where import AND, OR
 from django.db.utils import DatabaseError, IntegrityError
@@ -47,27 +49,33 @@ def safe_call(func):
         try:
             return func(*args, **kwargs)
         # TODO: Replace this with your DB error class
-        except YourDatabaseError, e:
+        except Exception, e:
+            import pdb; pdb.set_trace()
+
             raise DatabaseError, DatabaseError(*tuple(e)), sys.exc_info()[2]
     return _func
 
 class BackendQuery(NonrelQuery):
+
     def __init__(self, compiler, fields):
         super(BackendQuery, self).__init__(compiler, fields)
         # TODO: add your initialization code here
-        self.db_query = LowLevelQuery(self.connection.db_connection)
+        domain = self.query.model._meta.db_table
+        self.db_query = SimpleDBQuery(
+            self.connection.create_manager(domain), self.query.model)
 
     # This is needed for debugging
     def __repr__(self):
         # TODO: add some meaningful query string for debugging
-        return '<BackendQuery: ...>'
+        return '<BackendQuery: %s>' % self.query.model._meta.db_table
 
     @safe_call
-    def fetch(self):
+    def fetch(self, low_mark=None, high_mark=None):
         # TODO: run your low-level query here
-        low_mark, high_mark = self.limits
+        #low_mark, high_mark = self.limits
         if high_mark is None:
             # Infinite fetching
+
             results = self.db_query.fetch_infinite(offset=low_mark)
         elif high_mark > low_mark:
             # Range fetching
@@ -131,7 +139,10 @@ class BackendQuery(NonrelQuery):
             op, value = op(lookup_type, value)
 
         db_value = self.convert_value_for_db(db_type, value)
-        self.db_query.filter(column, op, db_value)
+
+        # XXX check this is right
+        self.db_query.filter('%s %s' % (column, op), db_value)
+        #self.db_query.filter(column, op, db_value)
 
 class SQLCompiler(NonrelCompiler):
     query_class = BackendQuery
