@@ -108,6 +108,7 @@ class SaveEntityTests(unittest.TestCase):
         self.assertTrue(replace)
         self.assertEqual(None, expected)
 
+
 class InsertCompilerTests(unittest.TestCase):
 
     def setUp(self):
@@ -154,3 +155,43 @@ class InsertCompilerTests(unittest.TestCase):
             'name': 'foo',
             '_id': 'fizz'
         }, data)
+
+
+class QueryTests(unittest.TestCase):
+
+    def query(self):
+        from simpledb.query import SimpleDBQuery
+        return SimpleDBQuery(None, M, None)
+
+    def test_ordering_asc(self):
+        query = self.query()
+        query.add_ordering('foo', 'ASC')
+        self.assertEqual('foo', query.sort_by)
+
+    def test_ordering_desc(self):
+        query = self.query()
+        query.add_ordering('foo', 'DESC')
+        self.assertEqual('-foo', query.sort_by)
+
+    def test_ordering_reset(self):
+        query = self.query()
+        query.add_ordering('foo', 'DESC')
+
+        # Change ordering isn't implemented
+        self.assertRaises(
+            NotImplementedError,
+            query.add_ordering,
+            'foo',
+            'ASC'
+        )
+
+        # Not changing, should be OK
+        query.add_ordering('foo', 'DESC')
+
+        # Change order field also not allowed
+        self.assertRaises(
+            NotImplementedError,
+            query.add_ordering,
+            'bar',
+            'DESC'
+        )

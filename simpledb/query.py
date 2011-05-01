@@ -63,3 +63,16 @@ class SimpleDBQuery(BotoQuery):
 
     def fetch_range(self, count, low_mark):
         raise NotImplementedError
+
+    def add_ordering(self, column, direction):
+        if direction.lower() == 'desc':
+            sort_by = '-%s' % column
+        else:
+            sort_by = column
+
+        if self.sort_by and self.sort_by != sort_by:
+            # XXX What should we do here? Order in software?
+            raise NotImplementedError
+
+        self.sort_by = sort_by
+
