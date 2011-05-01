@@ -16,7 +16,7 @@ from boto.sdb.domain import Domain
 from djangotoolbox.db.basecompiler import NonrelQuery, NonrelCompiler, \
     NonrelInsertCompiler, NonrelUpdateCompiler, NonrelDeleteCompiler
 
-from simpledb.db.query import SimpleDBQuery
+from simpledb.query import SimpleDBQuery
 from simpledb.utils import domain_for_model
 
 
@@ -205,7 +205,6 @@ class SQLCompiler(NonrelCompiler):
 class SQLInsertCompiler(NonrelInsertCompiler, SQLCompiler):
     @safe_call
     def insert(self, data, return_id=False):
-        # TODO: implement this
         pk_column = self.query.get_meta().pk.column
         if pk_column in data:
             data['_id'] = data[pk_column]
