@@ -1,6 +1,8 @@
 from boto.sdb.db.query import Query as BotoQuery
 from boto.sdb.db.property import Property
 
+from simpledb.utils import domain_for_model
+
 def model_adapter(django_model):
     properties = {}
     for field in django_model._meta.fields:
@@ -28,7 +30,7 @@ def model_adapter(django_model):
 
         # Override __name__ as boto uses this to figure out the
         # __type__ attributes.
-        __name__ = '%s.%s' % (django_model._meta.app_label, django_model.__name__)
+        __name__ = domain_for_model(django_model)
 
         @classmethod
         def find_property(cls, prop_name):

@@ -11,6 +11,8 @@ from boto.sdb.db import model
 from boto.sdb.db.manager.sdbmanager import SDBManager
 import boto
 
+from simpledb.utils import domain_for_model
+
 class HasConnection(object):
 
     @property
@@ -50,7 +52,7 @@ class DatabaseCreation(NonrelDatabaseCreation, HasConnection):
         """ We don't actually return any SQL here, but we do go right ahead
         and create a domain for the model.
         """
-        domain_name = '%s.%s' % (model._meta.app_label, model.__name__)
+        domain_name = domain_for_model(model)
         self.sdb.create_domain(domain_name)
         return [], {}
 

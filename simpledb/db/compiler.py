@@ -1,8 +1,6 @@
 import datetime
 import sys
 
-from simpledb.db.query import SimpleDBQuery
-
 from django.db.models.sql.constants import LOOKUP_SEP, MULTI, SINGLE
 from django.db.models.sql.where import AND, OR
 from django.db.utils import DatabaseError, IntegrityError
@@ -12,6 +10,9 @@ from functools import wraps
 
 from djangotoolbox.db.basecompiler import NonrelQuery, NonrelCompiler, \
     NonrelInsertCompiler, NonrelUpdateCompiler, NonrelDeleteCompiler
+
+from simpledb.db.query import SimpleDBQuery
+from simpledb.utils import domain_for_model
 
 # TODO: Change this to match your DB
 # Valid query types (a dictionary is used for speedy lookups).
@@ -60,7 +61,7 @@ class BackendQuery(NonrelQuery):
     def __init__(self, compiler, fields):
         super(BackendQuery, self).__init__(compiler, fields)
         # TODO: add your initialization code here
-        domain = self.query.model._meta.db_table
+        domain = domain_for_model(self.query.model)
         self.db_query = SimpleDBQuery(
             self.connection.create_manager(domain), self.query.model)
 
