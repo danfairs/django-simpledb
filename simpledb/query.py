@@ -4,22 +4,10 @@ from boto.sdb.db.property import Property
 from simpledb.utils import domain_for_model
 
 def model_adapter(django_model):
-    properties = {}
-    for field in django_model._meta.fields:
-        default = field.default
-        if callable(default):
-            default = default()
-        choices = [c[0] for c in getattr(field, 'choices', ())]
-        properties[field.name] = Property(
-            verbose_name=field.verbose_name,
-            name=field.name,
-            default=default,
-            required=not field.null,
-            choices=choices,
-            unique=field.unique
-        )
-
-    class ModelAdapter(django_model):
+    """ Return a generated subclass of django_model that conforms to the
+    API that boto expects of its own models.
+    """
+    class ModelAdapter(object):
         """ Adapter to provide the API that boto expects its models to have for
         normal Django models
         """
@@ -37,9 +25,25 @@ def model_adapter(django_model):
             """ Find the named property. Returns None if the property can't
             be found
             """
-            return properties.get(prop_name)
-
+            result = None
+            for field in django_model._meta.fields:
+                if field.name == prop_name:
+                    default = field.default
+                    if callable(default):
+                        default = default()
+                    choices = [c[0] for c in getattr(field, 'choices', ())]
+                    result = Property(
+                        verbose_name=field.verbose_name,
+                        name=field.name,
+                        default=default,
+                        required=not field.null,
+                        choices=choices,
+                        unique=field.unique
+                    )
+                    break
+            return result
     return ModelAdapter
+
 
 class SimpleDBQuery(BotoQuery):
 

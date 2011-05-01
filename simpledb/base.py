@@ -56,7 +56,13 @@ class DatabaseCreation(NonrelDatabaseCreation, HasConnection):
         self.sdb.create_domain(domain_name)
         return [], {}
 
+    def create_test_db(self, verbosity=1, autoclobber=False):
+        """ No test database for us """
+        return ''
 
+    def destroy_test_db(self, old_database_name, verbosity=1):
+        """ No-op """
+        pass
 class DatabaseFeatures(NonrelDatabaseFeatures):
     pass
 

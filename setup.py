@@ -30,6 +30,9 @@ setup(name='django-simpledb',
           'djangotoolbox>=0.9.2',
           #'Django', nonrel
       ],
+      test_requires=[
+        'mock>=0.7.0'
+      ]
       entry_points="""
 # -*- Entry points: -*-
 """,

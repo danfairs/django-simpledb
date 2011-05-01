@@ -6,3 +6,4 @@ django-simpledb
 
 .. _django-nonrel: http://www.allbuttonspressed.com/projects/django-nonrel
 
+It's unfinished. Patches are welcome, with tests.
