@@ -14,7 +14,12 @@ class ModelAdapterTests(unittest.TestCase):
 
     def adapt(self, model):
         from simpledb.query import model_adapter
-        return model_adapter(model)
+        from boto.sdb.db import model as boto_model
+        from boto.sdb.db.manager.sdbmanager import SDBManager
+
+        manager = mock.Mock(spec=SDBManager)
+        manager.sdb = self.sdb = mock.Mock(name='sdb')
+        return model_adapter(model, manager)
 
     def test_find_property_ok(self):
         """ find_property should return a boto Property object for fields
@@ -68,7 +73,7 @@ class SaveEntityTests(unittest.TestCase):
         r = self.save_entity(self.connection, M, {'name': u'foo'})
 
         # Since our data didn't have an _id, we should get a new uuid4 ID back
-        self.assertEqual(32, len(r))
+        self.assertTrue(bool(r))
         args, kwargs = self.sdb.put_attributes.call_args
         self.assertEqual({}, kwargs)
         domain, id, data, replace, expected = args

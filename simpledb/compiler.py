@@ -1,4 +1,5 @@
 import datetime
+import logging
 import sys
 import uuid
 
@@ -19,7 +20,8 @@ from djangotoolbox.db.basecompiler import NonrelQuery, NonrelCompiler, \
 from simpledb.query import SimpleDBQuery
 from simpledb.utils import domain_for_model
 
-
+logger = logging.getLogger('simpledb')
+AWS_MAX_RESULT_SIZE = 2500
 
 # TODO: Change this to match your DB
 # Valid query types (a dictionary is used for speedy lookups).
@@ -70,7 +72,7 @@ def save_entity(connection, model, data):
     attrs.update(data)
     if not attrs.has_key('_id'):
         # New item. Generate an ID.
-        attrs['_id'] = uuid.uuid4().hex
+        attrs['_id'] = uuid.uuid4().int
     domain = Domain(name=domain_name, connection=manager.sdb)
     domain.put_attributes(attrs['_id'], attrs, replace=True)
     return attrs['_id']
@@ -92,12 +94,19 @@ class BackendQuery(NonrelQuery):
 
     @safe_call
     def fetch(self, low_mark=None, high_mark=None):
+        reslice = 0
+        if high_mark > AWS_MAX_RESULT_SIZE:
+            logger.warn('Requested result size %s, assuming infinite' % (
+                high_mark))
+            reslice = high_mark
+            high_mark = None
         # TODO: run your low-level query here
         #low_mark, high_mark = self.limits
         if high_mark is None:
             # Infinite fetching
-
             results = self.db_query.fetch_infinite(offset=low_mark)
+            if reslice:
+                results = list(results)[:reslice]
         elif high_mark > low_mark:
             # Range fetching
             results = self.db_query.fetch_range(high_mark - low_mark, low_mark)
