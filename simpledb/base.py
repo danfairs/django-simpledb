@@ -38,14 +38,15 @@ class DatabaseCreation(NonrelDatabaseCreation, HasConnection):
         'FilePathField':                'unicode',
         'TextField':                    'unicode',
         'XMLField':                     'unicode',
-        'IntegerField':                 'unicode',
-        'SmallIntegerField':            'unicode',
-        'PositiveIntegerField':         'unicode',
-        'PositiveSmallIntegerField':    'unicode',
-        'BigIntegerField':              'unicode',
+        'IntegerField':                 'long',
+        'SmallIntegerField':            'int',
+        'PositiveIntegerField':         'long',
+        'PositiveSmallIntegerField':    'int',
+        'BigIntegerField':              'long',
         'GenericAutoField':             'unicode',
-        'AutoField':                    'unicode',
+        'AutoField':                    'long',
         'DecimalField':                 'unicode',
+        'ForeignKey':                   'long'
     })
 
     def sql_create_model(self, model, style, known_models=set()):
@@ -63,6 +64,8 @@ class DatabaseCreation(NonrelDatabaseCreation, HasConnection):
     def destroy_test_db(self, old_database_name, verbosity=1):
         """ No-op """
         pass
+
+
 class DatabaseFeatures(NonrelDatabaseFeatures):
     pass
 

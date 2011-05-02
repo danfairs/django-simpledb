@@ -180,14 +180,16 @@ class SQLCompiler(NonrelCompiler):
     # This gets called for each field type when you fetch() an entity.
     # db_type is the string that you used in the DatabaseCreation mapping
     def convert_value_from_db(self, db_type, value):
-        # TODO: implement this
-
         # Handle list types
         if isinstance(value, (list, tuple)) and len(value) and \
                 db_type.startswith('ListField:'):
             db_sub_type = db_type.split(':', 1)[1]
             value = [self.convert_value_from_db(db_sub_type, subvalue)
                      for subvalue in value]
+        elif db_type == 'long':
+            value = long(value)
+        elif db_type == 'int':
+            value = int(value)
         elif isinstance(value, str):
             # Always retrieve strings as unicode
             value = value.decode('utf-8')

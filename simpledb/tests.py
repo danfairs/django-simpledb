@@ -9,6 +9,8 @@ class M(models.Model):
         default='hi',
         unique=True)
 
+class X(models.Model):
+    fk = models.ForeignKey('M')
 
 class ModelAdapterTests(unittest.TestCase):
 
@@ -30,6 +32,14 @@ class ModelAdapterTests(unittest.TestCase):
         self.assertEqual('long name', prop.verbose_name)
         self.assertEqual(True, prop.unique)
         self.assertEqual('hi', prop.default)
+
+    def test_find_property_fk(self):
+        """ The name of the property should be the database column, else the
+        foreign key values won't be populated.
+        """
+        m = self.adapt(X)
+        prop = m.find_property('fk')
+        self.assertEqual('fk_id', prop.name)
 
     def test_find_property_callable_default(self):
         """ If the default is callable, then accessing the default should
@@ -200,3 +210,31 @@ class QueryTests(unittest.TestCase):
             'bar',
             'DESC'
         )
+
+
+class IntegrationTests(unittest.TestCase):
+
+    @mock.patch('simpledb.query.SimpleDBQuery.fetch_infinite')
+    def test_fetch(self, mock_fetch):
+        """
+        """
+        # List of values for the mock fetch to return, as it'll be called
+        # for both the fetch of X, and the traverse to the related M model.
+        values = [
+            [{
+                '_id': u'999',
+                'fk_id': u'123456'
+            }],
+            [{
+                '_id': u'123456',
+                'name': u'name for m'
+            }]
+        ]
+        def r(*args, **kwargs):
+            return values.pop(0)
+        mock_fetch.side_effect = r
+        xs = X.objects.all()
+        self.assertEqual(1, len(xs))
+        x = xs[0]
+        self.assertEqual(123456, x.fk_id)
+        self.assertEqual(u'name for m', x.fk.name)

@@ -11,7 +11,7 @@ def property_from_field(field):
     choices = [c[0] for c in getattr(field, 'choices', ())]
     return Property(
         verbose_name=field.verbose_name,
-        name=field.name,
+        name=field.column,
         default=default,
         required=not field.null,
         choices=choices,
