@@ -1,3 +1,4 @@
+import datetime
 import mock
 import unittest
 from django.db import models
@@ -124,7 +125,7 @@ class SaveEntityTests(unittest.TestCase):
         self.assertEqual(None, expected)
 
 
-class InsertCompilerTests(unittest.TestCase):
+class CompilerTests(unittest.TestCase):
 
     def setUp(self):
         self.query = mock.Mock()
@@ -133,6 +134,9 @@ class InsertCompilerTests(unittest.TestCase):
         self.query.get_meta.return_value = meta
         meta.pk.column = 'id_col'
         self.connection = mock.Mock()
+
+
+class InsertCompilerTests(CompilerTests):
 
     def compiler(self):
         from simpledb.compiler import SQLInsertCompiler
@@ -170,6 +174,49 @@ class InsertCompilerTests(unittest.TestCase):
             'name': 'foo',
             '_id': 'fizz'
         }, data)
+
+
+class SQLCompilerTests(CompilerTests):
+
+    def compiler(self):
+        from simpledb.compiler import SQLCompiler
+        return SQLCompiler(self.query, self.connection, None)
+
+    def test_convert_date_from_db(self):
+        """ Check we can convert from an ISO 8601 format back to a
+        datetime.date
+        """
+        dt = '2008-06-10'
+        converted = self.compiler().convert_value_from_db('date', dt)
+        self.assertEqual(2008, converted.year)
+        self.assertEqual(6, converted.month)
+        self.assertEqual(10, converted.day)
+
+    def test_convert_date_to_db(self):
+        """ Check that a date gets encoded to an ISO 8601 string
+        correctly
+        """
+        dt = datetime.date(2008, 6, 10)
+        actual = self.compiler().convert_value_for_db('date', dt)
+        self.assertEqual('2008-06-10', actual)
+
+    def test_convert_datetime_from_db(self):
+        """ Check that datetimes get created properly from encoded strings
+        """
+        dt = '2008-06-10T14:02:36.25'
+        converted = self.compiler().convert_value_from_db('datetime', dt)
+        self.assertEqual(2008, converted.year)
+        self.assertEqual(6, converted.month)
+        self.assertEqual(10, converted.day)
+        self.assertEqual(14, converted.hour)
+        self.assertEqual(2, converted.minute)
+        self.assertEqual(36, converted.second)
+        self.assertEqual(250000, converted.microsecond)
+
+    def test_convert_datetime_to_db(self):
+        dt = datetime.datetime(2008, 6, 10, 14, 2, 36, 250000)
+        actual = self.compiler().convert_value_for_db('datetime', dt)
+        self.assertEqual('2008-06-10T14:02:36.250000', actual)
 
 
 class QueryTests(unittest.TestCase):

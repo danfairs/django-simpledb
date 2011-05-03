@@ -46,7 +46,9 @@ class DatabaseCreation(NonrelDatabaseCreation, HasConnection):
         'GenericAutoField':             'unicode',
         'AutoField':                    'long',
         'DecimalField':                 'unicode',
-        'ForeignKey':                   'long'
+        'ForeignKey':                   'long',
+        'DateField':                    'date',
+        'DateTimeField':                'datetime',
     })
 
     def sql_create_model(self, model, style, known_models=set()):

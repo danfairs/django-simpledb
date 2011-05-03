@@ -53,6 +53,9 @@ NEGATION_MAP = {
     #'year': lambda lookup_type, value: ...,
 }
 
+DATETIME_ISO8601 = '%Y-%m-%dT%H:%M:%S.%f'
+DATE_ISO8601 = '%Y-%m-%d'
+
 def safe_call(func):
     @wraps(func)
     def _func(*args, **kwargs):
@@ -190,6 +193,11 @@ class SQLCompiler(NonrelCompiler):
             value = long(value)
         elif db_type == 'int':
             value = int(value)
+        # Dates and datetimes are encoded as ISO 8601
+        elif db_type == 'date':
+            value = datetime.datetime.strptime(value, DATE_ISO8601).date()
+        elif db_type == 'datetime':
+            value = datetime.datetime.strptime(value, DATETIME_ISO8601)
         elif isinstance(value, str):
             # Always retrieve strings as unicode
             value = value.decode('utf-8')
@@ -210,6 +218,10 @@ class SQLCompiler(NonrelCompiler):
             db_sub_type = db_type.split(':', 1)[1]
             value = [self.convert_value_for_db(db_sub_type, subvalue)
                      for subvalue in value]
+        elif isinstance(value, datetime.datetime):
+            value = value.strftime(DATETIME_ISO8601)
+        elif isinstance(value, datetime.date):
+            value = value.strftime(DATE_ISO8601)
         return value
 
 # This handles both inserts and updates of individual entities
