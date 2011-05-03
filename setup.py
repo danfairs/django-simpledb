@@ -32,7 +32,7 @@ setup(name='django-simpledb',
       ],
       test_requires=[
         'mock>=0.7.0'
-      ]
+      ],
       entry_points="""
 # -*- Entry points: -*-
 """,
