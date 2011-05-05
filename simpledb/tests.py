@@ -125,7 +125,7 @@ class SaveEntityTests(unittest.TestCase):
         self.assertEqual(None, expected)
 
 
-class CompilerTests(unittest.TestCase):
+class ConnectionTests(unittest.TestCase):
 
     def setUp(self):
         self.query = mock.Mock()
@@ -136,7 +136,7 @@ class CompilerTests(unittest.TestCase):
         self.connection = mock.Mock()
 
 
-class InsertCompilerTests(CompilerTests):
+class InsertConnectionTests(ConnectionTests):
 
     def compiler(self):
         from simpledb.compiler import SQLInsertCompiler
@@ -176,7 +176,7 @@ class InsertCompilerTests(CompilerTests):
         }, data)
 
 
-class SQLCompilerTests(CompilerTests):
+class SQLConnectionTests(ConnectionTests):
 
     def compiler(self):
         from simpledb.compiler import SQLCompiler
@@ -219,7 +219,7 @@ class SQLCompilerTests(CompilerTests):
         self.assertEqual('2008-06-10T14:02:36.250000', actual)
 
 
-class QueryTests(unittest.TestCase):
+class SimpleDBQueryTests(unittest.TestCase):
 
     def query(self):
         from simpledb.query import SimpleDBQuery
