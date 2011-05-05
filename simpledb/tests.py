@@ -230,7 +230,8 @@ class SimpleDBQueryTests(unittest.TestCase):
 
     def query(self):
         from simpledb.query import SimpleDBQuery
-        return SimpleDBQuery(None, M, None)
+        manager = mock.Mock()
+        return SimpleDBQuery(manager, M, None)
 
     def test_ordering_asc(self):
         query = self.query()
@@ -264,6 +265,39 @@ class SimpleDBQueryTests(unittest.TestCase):
             'bar',
             'DESC'
         )
+
+    @mock.patch('simpledb.query.SimpleDBQuery.fetch_infinite')
+    @mock.patch('boto.sdb.domain.Domain.batch_delete_attributes')
+    def test_delete(self, mock_boto_delete, mock_fetch):
+        """ Delete should fetch all items in the current query, and end up
+        calling boto's Domain.batch_delete_attributes with a dict - all item
+        names as keys, and None as values. This will cause SimpleDB to delete
+        the item completely.
+        """
+        fake_results = [{'id': 1}, {'id': 2}]
+        mock_fetch.return_value = iter(fake_results)
+        query = self.query()
+        query.delete()
+        mock_fetch.assert_called_with(0)
+        mock_boto_delete.assert_called_with({1: None, 2: None})
+
+
+class BackendQueryTests(unittest.TestCase):
+
+    @mock.patch('simpledb.query.domain_for_model')
+    def backend_query(self, mock_domain):
+        from simpledb.compiler import BackendQuery
+        mock_domain.return_value = 'some_name'
+        compiler = mock.Mock()
+        return BackendQuery(compiler, None)
+
+    @mock.patch('simpledb.query.SimpleDBQuery.delete')
+    def test_delete(self, mock_delete):
+        """ delete() on the backend query simply proxies directly to the
+        delete() method on SimpleDBQuery
+        """
+        self.backend_query().delete()
+        mock_delete.assert_called_with()
 
 
 class IntegrationTests(unittest.TestCase):
