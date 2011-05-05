@@ -31,7 +31,6 @@ OPERATORS_MAP = {
     'gte': '>=',
     'lt': '<',
     'lte': '<=',
-    'in': 'IN',
     'isnull': lambda lookup_type, value: ('=' if value else '!=', None),
 
     #'startswith': lambda lookup_type, value: ...,
@@ -45,7 +44,6 @@ NEGATION_MAP = {
     'gte': '<',
     'lt': '>=',
     'lte': '>',
-    'in': 'NOTIN',
     'isnull': lambda lookup_type, value: ('!=' if value else '=', None),
 
     #'startswith': lambda lookup_type, value: ...,
@@ -128,7 +126,6 @@ class BackendQuery(NonrelQuery):
 
     @safe_call
     def delete(self):
-        # TODO: implement this
         self.db_query.delete()
 
     @safe_call
@@ -156,22 +153,31 @@ class BackendQuery(NonrelQuery):
         if column == self.query.get_meta().pk.column:
             column = '_id'
 
-        if negated:
-            try:
-                op = NEGATION_MAP[lookup_type]
-            except KeyError:
-                raise DatabaseError("Lookup type %r can't be negated" % lookup_type)
+        # Special-case IN
+        if lookup_type == 'in':
+            if negated:
+                op = '!='
+            else:
+                op = '='
+            # boto needs IN queries' values to be lists of lists.
+            db_value = [[self.convert_value_for_db(db_type, v)] for v in value]
         else:
-            try:
-                op = OPERATORS_MAP[lookup_type]
-            except KeyError:
-                raise DatabaseError("Lookup type %r isn't supported" % lookup_type)
+            if negated:
+                try:
+                    op = NEGATION_MAP[lookup_type]
+                except KeyError:
+                    raise DatabaseError("Lookup type %r can't be negated" % lookup_type)
+            else:
+                try:
+                    op = OPERATORS_MAP[lookup_type]
+                except KeyError:
+                    raise DatabaseError("Lookup type %r isn't supported" % lookup_type)
 
-        # Handle special-case lookup types
-        if callable(op):
-            op, value = op(lookup_type, value)
+            # Handle special-case lookup types
+            if callable(op):
+                op, value = op(lookup_type, value)
 
-        db_value = self.convert_value_for_db(db_type, value)
+            db_value = self.convert_value_for_db(db_type, value)
 
         # XXX check this is right
         self.db_query.filter('%s %s' % (column, op), db_value)
@@ -222,6 +228,8 @@ class SQLCompiler(NonrelCompiler):
             value = value.strftime(DATETIME_ISO8601)
         elif isinstance(value, datetime.date):
             value = value.strftime(DATE_ISO8601)
+
+        # XXX string quoting rules
         return value
 
 # This handles both inserts and updates of individual entities

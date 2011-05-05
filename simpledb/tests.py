@@ -289,6 +289,9 @@ class BackendQueryTests(unittest.TestCase):
         from simpledb.compiler import BackendQuery
         mock_domain.return_value = 'some_name'
         compiler = mock.Mock()
+        def f(db_type, value):
+            return value
+        compiler.convert_value_for_db.side_effect = f
         return BackendQuery(compiler, None)
 
     @mock.patch('simpledb.query.SimpleDBQuery.delete')
@@ -299,6 +302,13 @@ class BackendQueryTests(unittest.TestCase):
         self.backend_query().delete()
         mock_delete.assert_called_with()
 
+    def test_add_filter_in(self):
+        """ 'in' queries are passed to boto like regular equals queries, but
+        with a list of values rather than a single value. boto will OR them.
+        """
+        query = self.backend_query()
+        query.add_filter('name', 'in', False, 'unicode', ['x', 'y'])
+        self.assertEqual([('name =', [['x'], ['y']])], query.db_query.filters)
 
 class IntegrationTests(unittest.TestCase):
 
