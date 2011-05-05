@@ -156,7 +156,9 @@ class BackendQuery(NonrelQuery):
         # Special-case IN
         if lookup_type == 'in':
             if negated:
-                op = '!='
+                # XXX needs testing, error for now.
+                raise NotImplementedError
+                #op = '!='
             else:
                 op = '='
             # boto needs IN queries' values to be lists of lists.
