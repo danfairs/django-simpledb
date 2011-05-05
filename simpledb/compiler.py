@@ -230,6 +230,8 @@ class SQLCompiler(NonrelCompiler):
             value = value.strftime(DATETIME_ISO8601)
         elif isinstance(value, datetime.date):
             value = value.strftime(DATE_ISO8601)
+        elif isinstance(value, (int, long)):
+            value = str(value).decode('ascii')
 
         # XXX string quoting rules
         return value

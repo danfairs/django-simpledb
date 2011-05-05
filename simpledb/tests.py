@@ -225,6 +225,13 @@ class SQLConnectionTests(ConnectionTests):
         actual = self.compiler().convert_value_for_db('datetime', dt)
         self.assertEqual('2008-06-10T14:02:36.250000', actual)
 
+    def test_convert_long_to_db(self):
+        actual = self.compiler().convert_value_for_db('long', 1L)
+        self.assertEqual('1', actual)
+
+    def test_convert_long_from_db(self):
+        actual = self.compiler().convert_value_from_db('long', '1')
+        self.assertEqual(1L, actual)
 
 class SimpleDBQueryTests(unittest.TestCase):
 
