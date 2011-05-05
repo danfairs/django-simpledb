@@ -50,6 +50,12 @@ def model_adapter(django_model, manager):
             """ Find the named property. Returns None if the property can't
             be found
             """
+            # Special-case - _id always maps to the primary key
+            if prop_name == '_id':
+                return property_from_field(django_model._meta.pk)
+
+            # Otherwise, look through the Django model fields for a field
+            # of the correct name. XXX should this be name or column?
             result = None
             for field in django_model._meta.fields:
                 if field.name == prop_name:
@@ -71,6 +77,7 @@ class SimpleDBQuery(BotoQuery):
     def __init__(self, manager, model, limit=None, next_token=None):
         self.manager = manager
         self.model_class = model_adapter(model, manager)
+        self.model = model
         self.limit = limit
         self.offset = 0
         self.filters = []
@@ -80,6 +87,9 @@ class SimpleDBQuery(BotoQuery):
         self.next_token = next_token
 
     def fetch_infinite(self, offset):
+        # XXX todo self.offset = offset
+        if offset:
+            raise NotImplementedError
         return self.manager.query(self)
 
     def fetch_range(self, count, low_mark):
@@ -98,3 +108,11 @@ class SimpleDBQuery(BotoQuery):
 
         self.sort_by = sort_by
 
+    def delete(self):
+        import pdb; pdb.set_trace()
+
+        domain = Domain(name=domain_for_model(self.model),
+            connection=self.manager.sdb)
+        pk_col = self.model._meta.pk.column
+        items = dict([(e[pk_col], None) for e in self.fetch_infinite(0)])
+        return domain.batch_delete_attributes(items)

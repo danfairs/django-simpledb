@@ -42,6 +42,13 @@ class ModelAdapterTests(unittest.TestCase):
         prop = m.find_property('fk')
         self.assertEqual('fk_id', prop.name)
 
+    def test_find_property_id(self):
+        """ The _id property is special-cased to return the primary key
+        """
+        m = self.adapt(X)
+        prop = m.find_property('_id')
+        self.assertEqual('id', prop.name)
+
     def test_find_property_callable_default(self):
         """ If the default is callable, then accessing the default should
         call.
