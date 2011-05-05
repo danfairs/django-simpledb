@@ -274,7 +274,7 @@ class SimpleDBQueryTests(unittest.TestCase):
         names as keys, and None as values. This will cause SimpleDB to delete
         the item completely.
         """
-        fake_results = [{'id': 1}, {'id': 2}]
+        fake_results = [{'_id': 1}, {'_id': 2}]
         mock_fetch.return_value = iter(fake_results)
         query = self.query()
         query.delete()

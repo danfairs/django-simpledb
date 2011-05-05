@@ -109,10 +109,7 @@ class SimpleDBQuery(BotoQuery):
         self.sort_by = sort_by
 
     def delete(self):
-        import pdb; pdb.set_trace()
-
+        items = dict([(e['_id'], None) for e in self.fetch_infinite(0)])
         domain = Domain(name=domain_for_model(self.model),
             connection=self.manager.sdb)
-        pk_col = self.model._meta.pk.column
-        items = dict([(e[pk_col], None) for e in self.fetch_infinite(0)])
         return domain.batch_delete_attributes(items)
