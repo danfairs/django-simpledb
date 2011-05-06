@@ -206,6 +206,11 @@ class SQLCompiler(NonrelCompiler):
             value = datetime.datetime.strptime(value, DATE_ISO8601).date()
         elif db_type == 'datetime':
             value = datetime.datetime.strptime(value, DATETIME_ISO8601)
+        elif db_type == 'bool':
+            if value == '0':
+                value = False
+            else:
+                value = True
         elif isinstance(value, str):
             # Always retrieve strings as unicode
             value = value.decode('utf-8')
@@ -215,9 +220,11 @@ class SQLCompiler(NonrelCompiler):
     # db_type is the string that you used in the DatabaseCreation mapping
     def convert_value_for_db(self, db_type, value):
         # TODO: implement this
-
-        if isinstance(value, unicode):
-            value = unicode(value)
+        if db_type == 'bool':
+            if value:
+                value = u'1'
+            else:
+                value = u'0'
         elif isinstance(value, str):
             # Always store strings as unicode
             value = value.decode('utf-8')

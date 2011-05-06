@@ -233,6 +233,18 @@ class SQLConnectionTests(ConnectionTests):
         actual = self.compiler().convert_value_from_db('long', '1')
         self.assertEqual(1L, actual)
 
+    def test_convert_bool_to_db(self):
+        actual = self.compiler().convert_value_for_db('bool', True)
+        self.assertEqual('1', actual)
+        actual = self.compiler().convert_value_for_db('bool', False)
+        self.assertEqual('0', actual)
+
+    def test_convert_bool_from_db(self):
+        actual = self.compiler().convert_value_from_db('bool', '1')
+        self.assertTrue(actual)
+        actual = self.compiler().convert_value_from_db('bool', '0')
+        self.assertFalse(actual)
+
 class SimpleDBQueryTests(unittest.TestCase):
 
     def query(self):
